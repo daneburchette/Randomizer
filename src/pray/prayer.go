@@ -2,9 +2,10 @@ package pray
 
 import (
 	"fmt"
+	"strings"
 )
 
-func Prayer(choice string) {
+func Prayer(choice string) string {
 	fmt.Println("Place your head on the BatterUp peripheral,")
 	fmt.Println("Point your No-No hole in a random direction")
 	fmt.Println("and say the prayer be all love to say:")
@@ -26,6 +27,17 @@ func Prayer(choice string) {
 	fmt.Println("STOP!!!!")
 	fmt.Scanln()
 	fmt.Println(choice)
-	fmt.Println("(Return to exit)")
-	fmt.Scanln()
+
+	var answer string
+	fmt.Println("Randomize again? (Y)es/(N)o/(Q)uit:")
+	for {
+		fmt.Scanln(&answer)
+		answer = strings.ToLower(strings.TrimSpace(answer))
+
+		if answer == "y" || answer == "n" || answer == "q" {
+			break
+		}
+		fmt.Println("Invalid input. Please enter (Y)es/(N)o/(Q)uit:")
+	}
+	return answer
 }
