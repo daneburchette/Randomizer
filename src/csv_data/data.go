@@ -7007,7 +7007,6 @@ var Data = [][]string{
 	{"Shanghai Mini", "ngpc"},
 	{"Neo Cherry Master Color - Real Casino Series", "ngpc"},
 	{"Pocket Tennis Color - Pocket Sports Series", "ngpc"},
-	{"Steam Link", "ports"},
 	{"Popeye", "atari2600"},
 	{"Apples And Dolls", "atari2600"},
 	{"Human Cannonball - Cannon Man", "atari2600"},

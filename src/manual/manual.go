@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"os"
 	"strings"
-
 	// Local imports
 	"randomizer/src/pray"
 )

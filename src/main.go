@@ -1,40 +1,65 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
-
 	//local import
-	"randomizer/src/game"
+	"randomizer/src/auto"
 	"randomizer/src/manual"
 )
 
+var MenuList []string = []string{
+	"CSV Randomizer",
+	"Manual Entry Randomizer",
+	"Exit",
+}
+
 func menu() {
-	var choice string
-	fmt.Println("Our Dark God: The Randomizer! (All Hail)")
+	var menu_option int
 	for {
-		fmt.Println("\n\t1 - CSV Randomizer\n\t2 - Manual Entry Randomizer\n\t3 - Exit")
-		fmt.Println("\nChoose Randomzier Mode [1-3]")
-		fmt.Scanln(&choice)
-		choice = strings.ToLower(strings.TrimSpace(choice))
-		if choice == "1" || choice == "2" || choice == "3" {
+		fmt.Println("Our Dark God: The Randomizer! (All Hail)")
+		for i := 0; i < len(MenuList); i++ {
+			fmt.Printf("\t%d - %s", i, MenuList[i])
+		}
+		fmt.Printf("\nChoose Randomzier Mode [1-%d]", len(MenuList))
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		input := strings.TrimSpace(scanner.Text())
+		choice, err := strconv.Atoi(input)
+		if err != nil {
+			fmt.Println("Error: ", err)
+			continue
+		}
+		if choice > 0 && choice <= len(MenuList) {
 			break
 		}
-		fmt.Println("Invalid input. Please enter a number from 1-3:")
+		fmt.Printf("Invalid input. Please enter a number from 1-%d:", len(MenuList))
 	}
-	switch choice {
-	case "1":
-		game.CSVRandomizer("games.csv")
-	case "2":
+	switch menu_option {
+	case 1:
+		filename := choose_csv()
+		auto.CSVRandomizer(filename)
+	case 2:
 		manual_randomizer.Manual()
-	case "3":
+	default:
 		os.Exit(0)
 	}
 }
 
-func main() {
-	for {
-		menu()
+func choose_csv() string {
+	fmt.Println("Enter name of custom csv file or leave blank for default: ")
+	scanner := bufio.NewScanner(os.Stdin)
+	input := strings.TrimSpace(scanner.Text())
+	if input == "" {
+		return "games.csv"
+	} else {
+		return input
 	}
+}
+
+func main() {
+	menu()
 }
