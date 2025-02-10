@@ -18,10 +18,52 @@ For the purpose of the included list, a retro game is defined as:
 
 The included list currently supports all US released titles for the following consoles:
 
-- TBA
+- Atari
+  - Atari 2600
+  - Atari 5200
+  - Atari 7800
+  - Atari Lynx
+- Nintendo
+  - Super Nintendo
+  - Nintendo 64
+  - Gameboy
+  - Gameboy Color
+  - Gameboy Advance
+- Sega
+  - Sega Master System
+  - Sega Genesis
+  - Sega 32X
+  - Game Gear
+- Sony
+  - Playstation
+- Misc
+  - Coleco Vision
+  - MSX
+  - Neo Geo Pocket Color
 
 ## Installation
 
 ### Pre Compiled Binaries
 
 ### Build From Source
+
+For Arch Linux
+
+```bash
+sudo pacman -S go
+git clone https://github.com/daneburchette/randomizer.git
+./scripts/build.sh
+```
+
+The build script will build linux and windows binaries inside the randomizer/bin directory.
+
+## Configuration
+
+The first time the Randomizer is run in CSV mode, if a csv file is not found, a default will be generated with the games for the listed systems. However, this file can be replaced with a custom csv file, or altered after generation to add or remove. The expected format is as follows:
+
+```csv
+"title","console"
+"Game 1 Name","Console 1 Name"
+"Game 2 Name", "Console 2 Name"
+...
+```
