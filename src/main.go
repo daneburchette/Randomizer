@@ -8,6 +8,8 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	// local import
@@ -19,7 +21,8 @@ import (
 const defaultCSVFile = "games.csv"
 
 var MenuList []string = []string{
-	"CSV Randomizer",
+	"CSV Randomizer, Single",
+	"CSV Randomizer, Multi",
 	"Manual Entry Randomizer",
 	"Exit",
 }
@@ -31,12 +34,28 @@ func getUserInput(prompt string) string {
 	return strings.TrimSpace(scanner.Text())
 }
 
+func clearScreen() {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "cls")
+	default:
+		cmd = exec.Command("clear")
+	}
+	cmd.Stdout = os.Stdout
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("Error clearing the screen:", err)
+	}
+}
+
 // Main menu and main function
 
 func menu() {
 	var menu_option int
 	var err error
 	for {
+		clearScreen()
 		fmt.Println("Our Dark God: The Randomizer! (All Hail)")
 		for i := 0; i < len(MenuList); i++ {
 			fmt.Printf("\t%d - %s\n", (i + 1), MenuList[i])
@@ -54,12 +73,13 @@ func menu() {
 		fmt.Printf("Invalid input. Please enter a number from 1-%d: ", len(MenuList))
 	}
 	fmt.Println(menu_option)
+	filename := defaultCSVFile
 	switch menu_option {
 	case 1:
-		filename := defaultCSVFile
-		// filename := choose_csv()
-		csvRandomizer(filename)
+		csvRandomizerSingle(filename)
 	case 2:
+		csvRandomizerMulti(filename)
+	case 3:
 		manual()
 	default:
 		os.Exit(0)
@@ -141,17 +161,94 @@ func parseCSVRecords(input [][]string) []Game {
 	return games
 }
 
-func csvRandomizer(filename string) {
+func getConsoleList(input []Game) []string {
+	var consoleList []string
+	for _, game := range input {
+		if !contains(consoleList, game.Console) {
+			consoleList = append(consoleList, game.Console)
+		}
+	}
+	return consoleList
+}
+
+func contains(slice []string, str string) bool {
+	for _, item := range slice {
+		if item == str {
+			return true
+		}
+	}
+	return false
+}
+
+func csvRandomizerMulti(filename string) {
+	var count int
+	clearScreen()
+	games, err := loadCSV(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
 	for {
+		var err error
+		input := getUserInput("How many games are you praying for?")
+		count, err = strconv.Atoi(input)
+		if err != nil {
+			fmt.Println("Please enter a number: ")
+			continue
+		}
+		if count > len(games)-1 {
+			fmt.Printf("You cannot pray for more games than are in the list! Choose a number smaller than %d\n", len(games)-1)
+			continue
+		}
+		break
+	}
+	for {
+		clearScreen()
+		full_games := parseCSVRecords(games)
+		selectedGames := randomizeGames(full_games, count)
+		next := prayer(selectedGames)
+		switch next {
+		case "q":
+			os.Exit(0)
+		case "y":
+			continue
+		default:
+			return
+		}
+	}
+}
+
+func randomizeGames(games []Game, count int) []string {
+	// Helper function for csvRandomizeMulti
+	if count > len(games) {
+		log.Fatal("Requested more games than available.")
+	}
+	selectedIndices := make(map[int]struct{})
+	var selectedGames []string
+	for len(selectedGames) < count {
+		randomIndex := rand.Intn(len(games))
+		if _, exists := selectedIndices[randomIndex]; !exists {
+			selectedGames = append(selectedGames, games[randomIndex].GameString())
+			selectedIndices[randomIndex] = struct{}{}
+		}
+	}
+	return selectedGames
+}
+
+func csvRandomizerSingle(filename string) {
+	for {
+		clearScreen()
 		games, err := loadCSV(filename)
 		if err != nil {
 			log.Fatal(err)
 		}
 		full_games := parseCSVRecords(games)
+		// consoles := getConsoleList(full_games)
 
+		// add filter prompts here, possible a bool to bypass filter when loading from menu
 		choice := rand.Intn(len(full_games))
 
-		game := full_games[choice].GameString()
+		var game []string
+		game = append(game, full_games[choice].GameString())
 		next := prayer(game)
 		switch next {
 		case "q":
@@ -261,14 +358,16 @@ func gamePrompt() ([]string, error) {
 
 func manual() {
 	for {
+		clearScreen()
 		games, err := gamePrompt()
 		if err != nil {
 			fmt.Println("Error: ", err)
 			continue
 		}
 		choice := rand.Intn(len(games))
-
-		next := prayer(games[choice])
+		var gameChoices []string
+		gameChoices = append(gameChoices, games[choice])
+		next := prayer(gameChoices)
 		switch next {
 		case "q":
 			os.Exit(0)
@@ -282,7 +381,7 @@ func manual() {
 
 // Prayer
 
-func prayer(choice string) string {
+func prayer(choice []string) string {
 	fmt.Println("Place your head on the BatterUp peripheral,")
 	fmt.Println("Point your No-No hole in a random direction")
 	fmt.Println("and say the prayer be all love to say:")
@@ -297,14 +396,15 @@ func prayer(choice string) string {
 	fmt.Scanln()
 	fmt.Println("STOP!!!!")
 	fmt.Scanln()
-	fmt.Println(choice)
+	for i := 0; i < len(choice); i++ {
+		fmt.Println(choice[i])
+	}
 
 	var answer string
 	fmt.Println("Randomize again? (Y)es/(N)o/(Q)uit:")
 	for {
 		fmt.Scanln(&answer)
 		answer = strings.ToLower(strings.TrimSpace(answer))
-
 		if answer == "y" || answer == "n" || answer == "q" {
 			break
 		}

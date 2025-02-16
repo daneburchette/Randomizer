@@ -1,7 +1,7 @@
 package csv_data
 
 var Data = [][]string{
-	{"title,console"},
+	{"title", "console"},
 	{"P.K.'s Math Studio 1", "PSX"},
 	{"Crusaders of Might and Magic", "PSX"},
 	{"Driver - You Are the Wheelman", "PSX"},
