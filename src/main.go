@@ -12,21 +12,22 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	// local import
+	// Local import
 	"randomizer/src/csv_data"
 )
 
-// Constants and utilities
-
+// Constants and utility variables
 const defaultCSVFile = "games.csv"
 
-var MenuList []string = []string{
+// Menu options for the user
+var menuOptions []string = []string{
 	"CSV Randomizer, Single",
 	"CSV Randomizer, Multi",
 	"Manual Entry Randomizer",
 	"Exit",
 }
 
+// getUserInput prompts the user with a message and returns their input as a string
 func getUserInput(prompt string) string {
 	fmt.Println(prompt)
 	scanner := bufio.NewScanner(os.Stdin)
@@ -34,6 +35,7 @@ func getUserInput(prompt string) string {
 	return strings.TrimSpace(scanner.Text())
 }
 
+// clearScreen clears the console screen depending on the operating system
 func clearScreen() {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
@@ -49,45 +51,45 @@ func clearScreen() {
 	}
 }
 
-// Main menu and main function
-
+// menu displays the main menu to the user and handles their selection
 func menu() {
-	var menu_option int
+	var selectedOption int
 	var err error
 	for {
 		clearScreen()
 		fmt.Println("Our Dark God: The Randomizer! (All Hail)")
-		for i := 0; i < len(MenuList); i++ {
-			fmt.Printf("\t%d - %s\n", (i + 1), MenuList[i])
+		for i := 0; i < len(menuOptions); i++ {
+			fmt.Printf("\t%d - %s\n", (i + 1), menuOptions[i])
 		}
-		fmt.Printf("\nChoose Randomzier Mode [1-%d]: ", len(MenuList))
+		fmt.Printf("\nChoose Randomizer Mode [1-%d]: ", len(menuOptions))
 		input := getUserInput("")
-		menu_option, err = strconv.Atoi(input)
+		selectedOption, err = strconv.Atoi(input)
 		if err != nil {
 			fmt.Println("Error: ", err)
 			continue
 		}
-		if menu_option > 0 && menu_option <= len(MenuList) {
+		if selectedOption > 0 && selectedOption <= len(menuOptions) {
 			break
 		}
-		fmt.Printf("Invalid input. Please enter a number from 1-%d: ", len(MenuList))
+		fmt.Printf("Invalid input. Please enter a number from 1-%d: ", len(menuOptions))
 	}
-	fmt.Println(menu_option)
+	fmt.Println(selectedOption)
 	filename := defaultCSVFile
-	switch menu_option {
+	switch selectedOption {
 	case 1:
-		csvRandomizerSingle(filename)
+		csvRandomizer(filename, false, false)
 	case 2:
-		csvRandomizerMulti(filename)
+		csvRandomizer(filename, true, false)
 	case 3:
-		manual()
+		manualEntryRandomizer()
 	default:
 		os.Exit(0)
 	}
 }
 
-func choose_csv() string {
-	input := getUserInput("Enter name of custom csv file or leave blank for default: ")
+// chooseCSV prompts the user to choose a custom CSV file or use the default one
+func chooseCSV() string {
+	input := getUserInput("Enter name of custom CSV file or leave blank for default: ")
 	if input == "" {
 		return defaultCSVFile
 	} else {
@@ -95,14 +97,16 @@ func choose_csv() string {
 	}
 }
 
+// main function which runs the program and calls the menu in a loop
 func main() {
 	for {
 		menu()
 	}
 }
 
-// CSV Handling
+// CSV Handling Functions
 
+// csvFileMissing checks if a CSV file exists
 func csvFileMissing(filename string) bool {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return true
@@ -110,6 +114,7 @@ func csvFileMissing(filename string) bool {
 	return false
 }
 
+// createDefaultCSV generates a default CSV file if none exists
 func createDefaultCSV(filename string) {
 	file, err := os.Create(filename)
 	if err != nil {
@@ -128,11 +133,11 @@ func createDefaultCSV(filename string) {
 			return
 		}
 	}
-	fmt.Println("Default csv file generated.")
+	fmt.Println("Default CSV file generated.")
 }
 
+// loadCSV loads the CSV file and returns its content as a 2D string array
 func loadCSV(filename string) ([][]string, error) {
-	// Load a .csv file and return nested arrays of file
 	if csvFileMissing(filename) {
 		createDefaultCSV(filename)
 	}
@@ -151,16 +156,17 @@ func loadCSV(filename string) ([][]string, error) {
 	return records, nil
 }
 
+// parseCSVRecords converts the CSV records into a slice of Game structs
 func parseCSVRecords(input [][]string) []Game {
-	// Convert loaded csv into an array of Game structs
 	var games []Game
 	for i := 1; i < len(input); i++ {
-		new_game := newGame(input[i])
-		games = append(games, new_game)
+		newGame := newGame(input[i])
+		games = append(games, newGame)
 	}
 	return games
 }
 
+// getConsoleList extracts a list of unique consoles from the games
 func getConsoleList(input []Game) []string {
 	var consoleList []string
 	for _, game := range input {
@@ -171,6 +177,7 @@ func getConsoleList(input []Game) []string {
 	return consoleList
 }
 
+// contains checks if a string is present in a slice of strings
 func contains(slice []string, str string) bool {
 	for _, item := range slice {
 		if item == str {
@@ -180,45 +187,48 @@ func contains(slice []string, str string) bool {
 	return false
 }
 
-func csvRandomizerMulti(filename string) {
-	var count int
+// csvRandomizer allows the user to select multiple games randomly from the CSV file
+func csvRandomizer(filename string, multi bool, filter bool) {
+	var gameCount int = 1
 	clearScreen()
 	games, err := loadCSV(filename)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error loading CSV file: ", err)
+		return
 	}
-	for {
-		var err error
-		input := getUserInput("How many games are you praying for?")
-		count, err = strconv.Atoi(input)
-		if err != nil {
-			fmt.Println("Please enter a number: ")
-			continue
+	if multi {
+		for {
+			var err error
+			input := getUserInput("How many games would you like to randomize?")
+			gameCount, err = strconv.Atoi(input)
+			if err != nil || gameCount <= 0 {
+				fmt.Println("Please enter a valid positive number.")
+				continue
+			} else if gameCount > len(games)-1 {
+				fmt.Printf("You cannot select more games than are in the list! Choose a smaller number.\n")
+				continue
+			}
+			break
 		}
-		if count > len(games)-1 {
-			fmt.Printf("You cannot pray for more games than are in the list! Choose a number smaller than %d\n", len(games)-1)
-			continue
-		}
-		break
+	}
+	if filter {
+		fmt.Println("Not Yet Implemented!")
+		return
 	}
 	for {
 		clearScreen()
-		full_games := parseCSVRecords(games)
-		selectedGames := randomizeGames(full_games, count)
-		next := prayer(selectedGames)
-		switch next {
-		case "q":
-			os.Exit(0)
-		case "y":
+		fullGames := parseCSVRecords(games)
+		selectedGames := randomizeGames(fullGames, gameCount)
+		if prayer(selectedGames) {
 			continue
-		default:
-			return
+		} else {
+			break
 		}
 	}
 }
 
+// randomizeGames selects a specified number of random games from the list
 func randomizeGames(games []Game, count int) []string {
-	// Helper function for csvRandomizeMulti
 	if count > len(games) {
 		log.Fatal("Requested more games than available.")
 	}
@@ -234,56 +244,30 @@ func randomizeGames(games []Game, count int) []string {
 	return selectedGames
 }
 
-func csvRandomizerSingle(filename string) {
-	for {
-		clearScreen()
-		games, err := loadCSV(filename)
-		if err != nil {
-			log.Fatal(err)
-		}
-		full_games := parseCSVRecords(games)
-		// consoles := getConsoleList(full_games)
-
-		// add filter prompts here, possible a bool to bypass filter when loading from menu
-		choice := rand.Intn(len(full_games))
-
-		var game []string
-		game = append(game, full_games[choice].GameString())
-		next := prayer(game)
-		switch next {
-		case "q":
-			os.Exit(0)
-		case "y":
-			continue
-		default:
-			return
-		}
-	}
-}
-
-// Game struct and methods
-
+// Game struct represents a retro game with a title and console
 type Game struct {
-
-	// Structure for a retro game
 	Title   string
 	Console string
 }
 
+// newGame creates a new Game struct from a set of CSV values
 func newGame(input []string) Game {
-	// Parse set of strings into game
 	return Game{
 		Title:   input[0],
 		Console: input[1],
 	}
 }
 
+// GameString formats the Game struct into a readable string
 func (g *Game) GameString() string {
+	if g.Console == "" {
+		return fmt.Sprintf("%s", g.Title)
+	}
 	return fmt.Sprintf("%s (%s)", g.Title, g.Console)
 }
 
+// GameFilter filters a game based on a filter
 func (g *Game) GameFilter(filter Filter) bool {
-	// True is gamee is to remain, false if it is to be removed
 	consoleSet := make(map[string]struct{})
 	for _, console := range filter.Console {
 		consoleSet[console] = struct{}{}
@@ -296,48 +280,46 @@ func (g *Game) GameFilter(filter Filter) bool {
 	return exists
 }
 
-// Filter struct and methods
-
+// Filter struct for filtering games based on console and exclusion
 type Filter struct {
-	// Structure for a list of console to filter
 	Console []string
 	Exclude bool
 }
 
+// filterConsole applies a filter to a list of games and returns the filtered list
 func filterConsole(games []Game, filter Filter) ([]Game, error) {
-	// Remove games for a particular console
-	var new_games, removed_games []Game
+	var remainingGames, removedGames []Game
 	for i := 0; i < len(games); i++ {
 		if games[i].GameFilter(filter) {
-			removed_games = append(removed_games, games[i])
+			removedGames = append(removedGames, games[i])
 		} else {
-			new_games = append(new_games, games[i])
+			remainingGames = append(remainingGames, games[i])
 		}
 	}
-	// Check for empty list errors, and return requested list
-	var final_list []Game
+	var finalList []Game
 	var err error
 	if filter.Exclude {
-		err = listCheck(new_games)
-		final_list = new_games
+		err = listCheck(remainingGames)
+		finalList = remainingGames
 	} else {
-		err = listCheck(removed_games)
-		final_list = removed_games
+		err = listCheck(removedGames)
+		finalList = removedGames
 	}
-	return final_list, err
+	return finalList, err
 }
 
+// listCheck checks if the list of games is empty
 func listCheck(games []Game) error {
 	if len(games) == 0 {
-		err := errors.New("game list is empty")
-		return err
+		return errors.New("game list is empty")
 	}
 	return nil
 }
 
-// Manual Entry
+// Manual Entry Functions
 
-func gamePrompt() ([]string, error) {
+// gamePrompt asks the user to enter game titles manually
+func gamePrompt() ([]Game, error) {
 	var games []string
 	fmt.Println("Enter game titles to randomize, one at a time:")
 	fmt.Println("(Enter blank when done)")
@@ -348,40 +330,40 @@ func gamePrompt() ([]string, error) {
 		}
 		games = append(games, game)
 	}
-
+	var fullGames []Game
 	if len(games) <= 1 {
-		return games, errors.New("please enter at least two games to randomize")
+		return fullGames, errors.New("please enter at least two games to randomize")
 	}
-
-	return games, nil
+	for i := 0; i < len(games); i++ {
+		fullGames = append(fullGames, Game{Title: games[i], Console: ""})
+	}
+	return fullGames, nil
 }
 
-func manual() {
+// manualEntryRandomizer handles the manual entry randomization process
+func manualEntryRandomizer() {
 	for {
 		clearScreen()
 		games, err := gamePrompt()
 		if err != nil {
 			fmt.Println("Error: ", err)
+			fmt.Scanln()
 			continue
 		}
-		choice := rand.Intn(len(games))
-		var gameChoices []string
-		gameChoices = append(gameChoices, games[choice])
-		next := prayer(gameChoices)
-		switch next {
-		case "q":
-			os.Exit(0)
-		case "y":
+		clearScreen()
+		selectedGames := randomizeGames(games, 1)
+		if prayer(selectedGames) {
 			continue
-		default:
-			return
+		} else {
+			break
 		}
 	}
 }
 
-// Prayer
+// Prayer Functions
 
-func prayer(choice []string) string {
+// prayer simulates the randomizer prayer process and returns user's choice
+func prayer(choice []string) bool {
 	fmt.Println("Place your head on the BatterUp peripheral,")
 	fmt.Println("Point your No-No hole in a random direction")
 	fmt.Println("and say the prayer be all love to say:")
@@ -399,23 +381,34 @@ func prayer(choice []string) string {
 	for i := 0; i < len(choice); i++ {
 		fmt.Println(choice[i])
 	}
-
-	var answer string
-	fmt.Println("Randomize again? (Y)es/(N)o/(Q)uit:")
-	for {
-		fmt.Scanln(&answer)
-		answer = strings.ToLower(strings.TrimSpace(answer))
-		if answer == "y" || answer == "n" || answer == "q" {
-			break
-		}
-		fmt.Println("Invalid input. Please enter (Y)es/(N)o/(Q)uit:")
-	}
-	return answer
+	return shouldContinue()
 }
 
+// repeatPrayerPhrase repeats the prayer phrase a specified number of times
 func repeatPrayerPhrase(phrase string, times int) {
 	for i := 0; i < times; i++ {
 		fmt.Println(phrase)
 		fmt.Scanln()
+	}
+}
+
+// shouldContinue asks the user if they want to randomize again
+func shouldContinue() bool {
+	var input string
+	for {
+		input = getUserInput("\nRandomize again (Y)es/(N)o/(Q)uit:")
+		if input == "y" || input == "n" || input == "q" {
+			break
+		}
+		fmt.Println("Invalid input. Please enter (Y)es/(N)o/(Q)uit:")
+	}
+	switch input {
+	case "q":
+		os.Exit(0)
+		return false
+	case "y":
+		return true
+	default:
+		return false
 	}
 }
