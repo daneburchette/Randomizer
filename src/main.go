@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	_ "embed"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -13,13 +14,14 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-
 	// Local import
-	"randomizer/src/csv_data"
 )
 
-// Constants and utility variables
+// Constants, embeddings, and utility variables
 const defaultCSVFile = "games.csv"
+
+//go:embed csv/default.csv
+var embeddedCSV []byte
 
 // Menu options for the user
 var menuOptions []string = []string{
@@ -128,7 +130,9 @@ func createDefaultCSV(filename string) {
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	for _, record := range csv_data.Data {
+	reader := csv.NewReader(strings.NewReader(string(embeddedCSV)))
+	records, _ := reader.ReadAll()
+	for _, record := range records {
 		err := writer.Write(record)
 		if err != nil {
 			log.Fatal(err)
