@@ -10,8 +10,10 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
+
 	// Local import
 	"randomizer/src/csv_data"
 )
@@ -58,8 +60,8 @@ func menu() {
 	for {
 		clearScreen()
 		fmt.Println("Our Dark God: The Randomizer! (All Hail)")
-		for i := 0; i < len(menuOptions); i++ {
-			fmt.Printf("\t%d - %s\n", (i + 1), menuOptions[i])
+		for i, menuOption := range menuOptions {
+			fmt.Printf("\t%d - %s\n", i+1, menuOption)
 		}
 		fmt.Printf("\nChoose Randomizer Mode [1-%d]: ", len(menuOptions))
 		input := getUserInput("")
@@ -170,7 +172,8 @@ func parseCSVRecords(input [][]string) []Game {
 func getConsoleList(input []Game) []string {
 	var consoleList []string
 	for _, game := range input {
-		if !contains(consoleList, game.Console) {
+		if !slices.Contains(consoleList, game.Console) {
+			// if !contains(consoleList, game.Console) {
 			consoleList = append(consoleList, game.Console)
 		}
 	}
@@ -178,14 +181,14 @@ func getConsoleList(input []Game) []string {
 }
 
 // contains checks if a string is present in a slice of strings
-func contains(slice []string, str string) bool {
-	for _, item := range slice {
-		if item == str {
-			return true
-		}
-	}
-	return false
-}
+// func contains(slice []string, str string) bool {
+// 	for _, item := range slice {
+// 		if item == str {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
 
 // csvRandomizer allows the user to select multiple games randomly from the CSV file
 func csvRandomizer(filename string, multi bool, filter bool) {
@@ -289,7 +292,7 @@ type Filter struct {
 // filterConsole applies a filter to a list of games and returns the filtered list
 func filterConsole(games []Game, filter Filter) ([]Game, error) {
 	var remainingGames, removedGames []Game
-	for i := 0; i < len(games); i++ {
+	for i := range len(games) {
 		if games[i].GameFilter(filter) {
 			removedGames = append(removedGames, games[i])
 		} else {
@@ -334,7 +337,7 @@ func gamePrompt() ([]Game, error) {
 	if len(games) <= 1 {
 		return fullGames, errors.New("please enter at least two games to randomize")
 	}
-	for i := 0; i < len(games); i++ {
+	for i := range len(games) {
 		fullGames = append(fullGames, Game{Title: games[i], Console: ""})
 	}
 	return fullGames, nil
@@ -378,7 +381,7 @@ func prayer(choice []string) bool {
 	fmt.Scanln()
 	fmt.Println("STOP!!!!")
 	fmt.Scanln()
-	for i := 0; i < len(choice); i++ {
+	for i := range len(choice) {
 		fmt.Println(choice[i])
 	}
 	return shouldContinue()
@@ -386,7 +389,7 @@ func prayer(choice []string) bool {
 
 // repeatPrayerPhrase repeats the prayer phrase a specified number of times
 func repeatPrayerPhrase(phrase string, times int) {
-	for i := 0; i < times; i++ {
+	for range times {
 		fmt.Println(phrase)
 		fmt.Scanln()
 	}
