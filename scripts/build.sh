@@ -1,5 +1,9 @@
 #! /bin/bash
 
+# Delete bin/ contents for clean build
+echo "Clearing ./bin/ directory"
+rm bin/*
+# Build Linux and Windwos binaries
 echo "Building Linux Binary"
 go build -o bin/Randomizer src/main.go
 export GOOS=windows
