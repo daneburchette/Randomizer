@@ -18,7 +18,7 @@ import (
 )
 
 // Constants, embeddings, and utility variables
-const defaultCSVFile = "games.csv"
+var defaultCSVFile string = "games.csv"
 
 //go:embed csv/default.csv
 var embeddedCSV []byte
@@ -373,7 +373,7 @@ func manualEntryRandomizer() {
 func prayer(choice []string) bool {
 	fmt.Println("Place your head on the BatterUp peripheral,")
 	fmt.Println("Point your No-No hole in a random direction")
-	fmt.Println("and say the prayer be all love to say:")
+	fmt.Println("and say the prayer we all love to say:")
 	fmt.Scanln()
 	repeatPrayerPhrase("Bee-da-bud-a-bud-a", 3)
 	repeatPrayerPhrase("Boop", 3)
